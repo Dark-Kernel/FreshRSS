@@ -1,20 +1,28 @@
-name: Docker Image CI
+name: Build and deploy
 
 on:
   push:
-    branches: [ "edge" ]
-  pull_request:
-    branches: [ "edge" ]
+    branches:
+      - main
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Docker/Dockerfile --tag frss:latest
-    - name: Deployying
-      run: docker run -d -p 80:80 frss:latest
+      - uses: actions/checkout@v3
+      - name: Build Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Docker/Dockerfile
+          push: true
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./p/
